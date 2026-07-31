@@ -78,7 +78,7 @@ export default function Home() {
       />
 
       {/* 2. Semi-Transparent Dark Glass Overlay (Opacity & Backdrop Blur for UI Readability) */}
-      <div className="fixed inset-0 bg-black/55 backdrop-blur-[3px] -z-10" />
+      <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] -z-10 " />
 
       {/* 3. Initial Intro Sequence Component */}
       {showIntro && (
