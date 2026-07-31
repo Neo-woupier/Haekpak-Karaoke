@@ -73,12 +73,12 @@ export default function Home() {
     <main className="relative min-h-screen text-white bg-gray-950 font-sans selection:bg-pink-500 selection:text-white overflow-x-hidden pb-32">
       {/* 1. Dynamic Background GIF Container */}
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10 scale-105 filter brightness-90 transition-all duration-700"
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none scale-105 filter brightness-90 transition-all duration-700"
         style={{ backgroundImage: "url('/catsing.gif')" }}
       />
 
       {/* 2. Semi-Transparent Dark Glass Overlay (Opacity & Backdrop Blur for UI Readability) */}
-      <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] -z-10 " />
+      <div className="fixed inset-0 bg-black/55 backdrop-blur-[2px] -z-10 " />
 
       {/* 3. Initial Intro Sequence Component */}
       {showIntro && (
