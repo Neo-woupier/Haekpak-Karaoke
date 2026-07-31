@@ -6,9 +6,7 @@
 
 ## 🌐 Quick Links (ลิงก์สำคัญ)
 
-* 🚀 **Live Demo:** [ดูหน้าเว็บตัวอย่างบน Vercel](https://your-vercel-demo-link.vercel.app) *(รออัปเดตลิงก์จริง)*
-* 🎨 **Figma Design:** [ดูแบบ UI / Wireframe บน Figma](https://figma.com/your-design-link) *(รออัปเดตลิงก์จริง)*
-* ⚙️ **Backend Repository:** [Haekpak Karaoke Backend API](https://github.com/Neo-woupier/Haekpak-Karaoke-Backend) *(รออัปเดตลิงก์จริง)*
+* 🚀 **Live Demo:** [ดูหน้าเว็บตัวอย่างบน Vercel](https://haekpak-karaoke.vercel.app/) *(รออัปเดตลิงก์จริง)*
 
 ---
 
