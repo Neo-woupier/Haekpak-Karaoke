@@ -19,6 +19,12 @@ A web-based room booking application for **"Haekpak Karaoke"**. This is a simula
 - **Responsiveness:** Mobile-first approach. UI components must scale smoothly across smartphones, tablets, and desktop screens.
 
 ### 2. Main Page: Interactive Schedule Grid
+**Initial Element:** 
+  - `<div className="relative z-10 text-center p-4">` containing the **HAEKPAK KARAOKE** title and subtitle.
+- **Animation Sequence:**
+  - **Zoom-in:** Scales and fades in over **0.25 seconds**.
+  - **Wait Duration:** Holds state for **0.75 seconds**.
+  - **Fade Out & Transition:** Smoothly fades out to transition into the selection / schedule view.
 - **Time Slots (Header/Columns):**
   - 1-hour duration per block.
   - 30-minute incremental intervals.
