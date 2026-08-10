@@ -1,14 +1,13 @@
-import type { NextConfig } from "next";
+import nextPlugin from "@next/eslint-plugin-next";
 
-const nextConfig: NextConfig = {
-  // ข้ามการตรวจ ESLint ตอนกด Build บน Vercel
-  eslint: {
-    ignoreDuringBuilds: true,
+export default [
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
   },
-  // ข้ามการตรวจ TypeScript Error ตอนกด Build
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-};
-
-export default nextConfig;
+];
