@@ -10,10 +10,8 @@ import BottomDrawerSummary from './BottomDrawerSummary';
 import CheckoutModal from './CheckoutModal';
 import SuccessPassModal from './SuccessPassModal';
 import { createClient } from '@/utils/supabase/client';
-import { GENERATE_TIME_SLOTS } from './mockData'; // เก็บฟังก์ชันสร้างเวลาไว้
-import { Room } from './types';
-import { SelectedSlot, BookingReceipt } from './types';
-
+import { GENERATE_TIME_SLOTS } from './mockData';
+import { Room, SelectedSlot, BookingReceipt } from './types';
 
 export default function Home() {
   // App States
@@ -23,34 +21,37 @@ export default function Home() {
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [completedReceipt, setCompletedReceipt] = useState<BookingReceipt | null>(null);
-  
 
-  // 1. เพิ่ม State เก็บรายชื่อห้องจาก Supabase
+  // Supabase Data States
   const [rooms, setRooms] = useState<Room[]>([]);
-
-  // 2. ปรับ Schedules State ให้เริ่มต้นเป็น Object ว่าง {} (ลบ INITIAL_ROOM_SCHEDULES ออก)
   const [schedules, setSchedules] = useState<
     Record<string, Record<string, 'available' | 'booked' | 'expired'>>
   >({});
 
   const timeSlots = GENERATE_TIME_SLOTS();
 
-  // 3. ดึงข้อมูลจริงจาก Supabase เมื่อหน้าเว็บโหลด
+  // ดึงข้อมูลจริงจาก Supabase เมื่อหน้าเว็บโหลด
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       const supabase = createClient();
 
-      // ดึงรายชื่อห้องทั้งหมด
+      // ดึงวันที่ปัจจุบันตามเวลาไทย (UTC+7 / Asia/Bangkok) รูปแบบ YYYY-MM-DD
+      const todayStr = new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Bangkok',
+      });
+
+      // 1. ดึงรายชื่อห้องทั้งหมด
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
         .select('*')
         .order('id', { ascending: true });
 
-      // ดึงสล็อตเวลาที่ถูกจองแล้วทั้งหมด
+      // 2. ดึงสล็อตเวลาที่ถูกจองแล้วเฉพาะของวันนี้ (เวลาไทย)
       const { data: slotsData, error: slotsError } = await supabase
         .from('booked_slots')
-        .select('room_id, slot_id');
+        .select('room_id, slot_id')
+        .eq('booking_date', todayStr);
 
       if (roomsError) console.error('Error fetching rooms:', roomsError);
       if (slotsError) console.error('Error fetching slots:', slotsError);
@@ -73,15 +74,15 @@ export default function Home() {
       if (roomsData) {
         const formattedRooms: Room[] = roomsData.map((room) => ({
           ...room,
-          // 1. ดึงคอลัมน์ price_per_hour จาก Supabase มาแปลงเป็นราคา
           pricePerHour: Number(room.price_per_hour || 0),
-
-          // 2. แปลง capacity (ตัวเลข 7, 12) หรือ badge_text ให้เป็นข้อความแสดงจำนวนคน
-          badgeText: room.badge_text || (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน'),
+          badgeText:
+            room.badge_text ||
+            (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน'),
         }));
 
-  setRooms(formattedRooms);
+        setRooms(formattedRooms);
       }
+
       setSchedules(formattedSchedules);
       setIsLoading(false);
     };
@@ -107,7 +108,6 @@ export default function Home() {
 
   // Handle Completed Booking
   const handleConfirmBooking = (receipt: BookingReceipt) => {
-    // Update local schedule state so booked slots become 'booked'
     setSchedules((prev) => {
       const next = { ...prev };
       receipt.selectedSlots.forEach((s) => {
@@ -125,16 +125,16 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen text-white bg-gray-950 font-sans selection:bg-pink-500 selection:text-white overflow-x-hidden pb-32">
-      {/* 1. Dynamic Background GIF Container */}
+      {/* Dynamic Background GIF Container */}
       <div
         className="fixed inset-0 bg-cover bg-center bg-no-repeat pointer-events-none scale-105 filter brightness-90 transition-all duration-700"
         style={{ backgroundImage: "url('/catsing.gif')" }}
       />
 
-      {/* 2. Semi-Transparent Dark Glass Overlay (Opacity & Backdrop Blur for UI Readability) */}
-      <div className="fixed inset-0 bg-black/55 backdrop-blur-[2px] -z-10 " />
+      {/* Semi-Transparent Dark Glass Overlay */}
+      <div className="fixed inset-0 bg-black/55 backdrop-blur-[2px] -z-10" />
 
-      {/* 3. Initial Intro Sequence Component */}
+      {/* Initial Intro Sequence Component */}
       {showIntro && (
         <IntroSequence onComplete={() => setShowIntro(false)} />
       )}
@@ -150,7 +150,7 @@ export default function Home() {
                 Online Karaoke Booking
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text  from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
               HAEKPAK KARAOKE
             </h1>
             <p className="text-xs text-gray-300">
@@ -160,16 +160,17 @@ export default function Home() {
 
           {/* Action Buttons Header */}
           <div className="flex items-center gap-2">
-        
-            {/* "จองห้อง" (Book Room) Top-Right Button */}
             <button
               onClick={() => setIsBookingMode((prev) => !prev)}
-              className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-md ${isBookingMode
+              className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-md ${
+                isBookingMode
                   ? 'bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.9)] ring-2 ring-pink-300 animate-pulse'
                   : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.6)] hover:scale-105'
-                }`}
+              }`}
             >
-              <span>{isBookingMode ? '✖ ยกเลิกโหมดเลือก' : '🎤 จองห้อง (Book Room)'}</span>
+              <span>
+                {isBookingMode ? '✖ ยกเลิกโหมดเลือก' : '🎤 จองห้อง (Book Room)'}
+              </span>
             </button>
           </div>
         </header>
@@ -192,7 +193,7 @@ export default function Home() {
           <SkeletonGrid />
         ) : (
           <ScheduleGrid
-            rooms={rooms} // ส่งรายชื่อห้องจริงจาก Supabase
+            rooms={rooms}
             timeSlots={timeSlots}
             schedules={schedules}
             isBookingMode={isBookingMode}
@@ -202,14 +203,14 @@ export default function Home() {
         )}
       </div>
 
-      {/* 4. Bottom Drawer Summary Component */}
+      {/* Bottom Drawer Summary Component */}
       <BottomDrawerSummary
         selectedSlots={selectedSlots}
         onClearSelection={() => setSelectedSlots([])}
         onProceedCheckout={() => setShowCheckout(true)}
       />
 
-      {/* 5. Checkout Modal (PromptPay 50% Deposit & Customer Info Form) */}
+      {/* Checkout Modal */}
       {showCheckout && (
         <CheckoutModal
           selectedSlots={selectedSlots}
@@ -218,7 +219,7 @@ export default function Home() {
         />
       )}
 
-      {/* 6. Success Digital Pass Ticket Modal */}
+      {/* Success Digital Pass Ticket Modal */}
       {completedReceipt && (
         <SuccessPassModal
           receipt={completedReceipt}
