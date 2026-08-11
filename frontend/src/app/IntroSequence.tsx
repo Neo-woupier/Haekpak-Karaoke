@@ -50,7 +50,7 @@ export default function IntroSequence({ onComplete }: IntroSequenceProps) {
         <div className="inline-block px-3 py-1 mb-3 rounded-full bg-pink-500/20 border border-pink-400/40 text-pink-300 text-xs font-semibold uppercase tracking-wider animate-pulse">
           🎤 Welcome to Premium Karaoke
         </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_4px_16px_rgba(236,72,153,0.8)]">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-wider text-transparent bg-clip-text bg-gradiernt-to- from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_4px_16px_rgba(236,72,153,0.8)]">
           HAEKPAK KARAOKE
         </h1>
         <p className="mt-3 text-base sm:text-lg font-medium text-pink-100/90 drop-shadow-md">
@@ -59,9 +59,9 @@ export default function IntroSequence({ onComplete }: IntroSequenceProps) {
 
         {/* Decorative glowing lines */}
         <div className="mt-4 flex justify-center items-center gap-2">
-          <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-pink-500 rounded-full" />
+          <div className="h-0.5 w-12 from-transparent to-pink-500 rounded-full" />
           <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-          <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-pink-500 rounded-full" />
+          <div className="h-0.5 w-12 from-transparent to-pink-500 rounded-full" />
         </div>
       </div>
     </div>

@@ -166,7 +166,7 @@ export default function CheckoutModal({
           </div>
 
           {/* PromptPay QR Code Display Section */}
-          <div className="glass-card rounded-2xl p-4 text-center space-y-3 border border-pink-500/30 bg-gradient-to-b from-pink-950/20 to-black/40">
+          <div className="glass-card rounded-2xl p-4 text-center space-y-3 border border-pink-500/30  from-pink-950/20 to-black/40">
             <div className="text-xs font-bold text-pink-300 uppercase tracking-wider">
               📲 สแกน QR Code เพื่อชำระเงินมัดจำ (PromptPay)
             </div>
@@ -198,7 +198,7 @@ export default function CheckoutModal({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-micro w-full py-4 rounded-2xl font-black text-base text-white bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 shadow-[0_0_30px_rgba(236,72,153,0.7)] hover:shadow-[0_0_40px_rgba(236,72,153,0.9)] cursor-pointer flex items-center justify-center gap-2"
+            className="btn-micro w-full py-4 rounded-2xl font-black text-base text-white  from-pink-500 via-purple-600 to-cyan-500 shadow-[0_0_30px_rgba(236,72,153,0.7)] hover:shadow-[0_0_40px_rgba(236,72,153,0.9)] cursor-pointer flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

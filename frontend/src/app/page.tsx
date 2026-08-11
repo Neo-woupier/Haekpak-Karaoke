@@ -96,7 +96,7 @@ export default function Home() {
                 Online Karaoke Booking
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text  from-pink-400 via-purple-300 to-cyan-400 drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
               HAEKPAK KARAOKE
             </h1>
             <p className="text-xs text-gray-300">
@@ -120,7 +120,7 @@ export default function Home() {
               className={`btn-micro px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
                 isBookingMode
                   ? 'bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.9)] ring-2 ring-pink-300 animate-pulse'
-                  : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.6)]'
+                  : 'from-pink-500 to-purple-600 text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.6)]'
               }`}
             >
               <span>{isBookingMode ? '✖ ยกเลิกโหมดเลือก' : '🎤 จองห้อง (Book Room)'}</span>

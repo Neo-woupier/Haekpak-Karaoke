@@ -78,7 +78,7 @@ export default function ScheduleGrid({
       {/* Main Interactive Grid Container */}
       <div className="glass-card rounded-2xl p-2 sm:p-4 border border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
         <div className="overflow-x-auto pb-2 scrollbar-thin">
-          <table className="w-full min-w-[760px] border-collapse">
+          <table className="w-full  border-collapse">
             <thead>
               <tr className="border-b border-white/15">
                 {/* Fixed Left Header for Room Name */}
@@ -93,7 +93,7 @@ export default function ScheduleGrid({
                 {timeSlots.map((slot) => (
                   <th
                     key={slot.id}
-                    className="p-2 text-center min-w-[100px] border-l border-white/10"
+                    className="p-2 text-center  border-l border-white/10"
                   >
                     <div className="text-xs font-bold text-pink-300 bg-pink-950/40 px-2 py-1 rounded-lg border border-pink-500/30">
                       {slot.timeLabel}

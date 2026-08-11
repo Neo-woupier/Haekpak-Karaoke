@@ -30,7 +30,7 @@ export default function SuccessPassModal({ receipt, onDone }: SuccessPassModalPr
         </div>
 
         {/* Digital Pass Ticket Card */}
-        <div className="glass-card rounded-2xl p-4 border border-white/20 text-left space-y-3 bg-gradient-to-b from-white/10 to-transparent relative overflow-hidden">
+        <div className="glass-card rounded-2xl p-4 border border-white/20 text-left space-y-3  from-white/10 to-transparent relative overflow-hidden">
           {/* Ticket Edge Notches */}
           <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-950 border border-white/20" />
           <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-950 border border-white/20" />
@@ -104,7 +104,7 @@ export default function SuccessPassModal({ receipt, onDone }: SuccessPassModalPr
         {/* Done / Reset Button */}
         <button
           onClick={onDone}
-          className="btn-micro w-full py-3.5 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] cursor-pointer"
+          className="btn-micro w-full py-3.5 rounded-2xl font-black text-sm text-white  from-emerald-500 to-cyan-500 shadow-[0_0_25px_rgba(16,185,129,0.5)] hover:shadow-[0_0_35px_rgba(16,185,129,0.8)] cursor-pointer"
         >
           ตกลง & กลับสู่หน้าหลัก
         </button>
