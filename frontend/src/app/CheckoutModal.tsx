@@ -245,7 +245,6 @@ export default function CheckoutModal({
           </div>
 
           {/* Submit Action */}
-          {/* Submit Action */}
           <button
             type="submit"
             disabled={isSubmitting}
