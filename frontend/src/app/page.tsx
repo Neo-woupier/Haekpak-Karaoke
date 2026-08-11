@@ -7,7 +7,9 @@ import ScheduleGrid from './ScheduleGrid';
 import BottomDrawerSummary from './BottomDrawerSummary';
 import CheckoutModal from './CheckoutModal';
 import SuccessPassModal from './SuccessPassModal';
-import { MOCK_ROOMS, GENERATE_TIME_SLOTS, INITIAL_ROOM_SCHEDULES } from './mockData';
+import { createClient } from '@/utils/supabase/client';
+import { GENERATE_TIME_SLOTS } from './mockData'; // เก็บฟังก์ชันสร้างเวลาไว้
+import { Room } from './types';
 import { SelectedSlot, BookingReceipt } from './types';
 
 export default function Home() {
@@ -19,20 +21,68 @@ export default function Home() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [completedReceipt, setCompletedReceipt] = useState<BookingReceipt | null>(null);
 
-  // Schedules state map: roomId -> slotId -> status
-  const [schedules, setSchedules] =
-    useState<Record<string, Record<string, 'available' | 'booked' | 'expired'>>>(
-      INITIAL_ROOM_SCHEDULES
-    );
+  // 1. เพิ่ม State เก็บรายชื่อห้องจาก Supabase
+  const [rooms, setRooms] = useState<Room[]>([]);
+
+  // 2. ปรับ Schedules State ให้เริ่มต้นเป็น Object ว่าง {} (ลบ INITIAL_ROOM_SCHEDULES ออก)
+  const [schedules, setSchedules] = useState<
+    Record<string, Record<string, 'available' | 'booked' | 'expired'>>
+  >({});
 
   const timeSlots = GENERATE_TIME_SLOTS();
 
-  // Initial Simulated Backend Fetch Loading State
+  // 3. ดึงข้อมูลจริงจาก Supabase เมื่อหน้าเว็บโหลด
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const supabase = createClient();
+
+      // ดึงรายชื่อห้องทั้งหมด
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select('*')
+        .order('id', { ascending: true });
+
+      // ดึงสล็อตเวลาที่ถูกจองแล้วทั้งหมด
+      const { data: slotsData, error: slotsError } = await supabase
+        .from('booked_slots')
+        .select('room_id, slot_id');
+
+      if (roomsError) console.error('Error fetching rooms:', roomsError);
+      if (slotsError) console.error('Error fetching slots:', slotsError);
+
+      // แปลงข้อมูลสล็อตที่จองแล้วให้อยู่ในโครงสร้าง { 'room-1': { 'slot-1500': 'booked' } }
+      const formattedSchedules: Record<
+        string,
+        Record<string, 'available' | 'booked' | 'expired'>
+      > = {};
+
+      if (slotsData) {
+        slotsData.forEach((item) => {
+          if (!formattedSchedules[item.room_id]) {
+            formattedSchedules[item.room_id] = {};
+          }
+          formattedSchedules[item.room_id][item.slot_id] = 'booked';
+        });
+      }
+
+      if (roomsData) {
+        const formattedRooms: Room[] = roomsData.map((room) => ({
+          ...room,
+          // 1. ดึงคอลัมน์ price_per_hour จาก Supabase มาแปลงเป็นราคา
+          pricePerHour: Number(room.price_per_hour || 0),
+
+          // 2. แปลง capacity (ตัวเลข 7, 12) หรือ badge_text ให้เป็นข้อความแสดงจำนวนคน
+          badgeText: room.badge_text || (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน'),
+        }));
+
+  setRooms(formattedRooms);
+      }
+      setSchedules(formattedSchedules);
       setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    };
+
+    fetchData();
   }, []);
 
   // Handle Slot Selection Toggle
@@ -106,22 +156,14 @@ export default function Home() {
 
           {/* Action Buttons Header */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowIntro(true)}
-              className="btn-micro px-3 py-2 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-gray-200"
-              title="ดูวิดีโอต้อนรับ"
-            >
-              🎬 ชม Intro
-            </button>
-
+        
             {/* "จองห้อง" (Book Room) Top-Right Button */}
             <button
               onClick={() => setIsBookingMode((prev) => !prev)}
-              className={`btn-micro px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                isBookingMode
+              className={`px-5 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-md ${isBookingMode
                   ? 'bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.9)] ring-2 ring-pink-300 animate-pulse'
-                  : 'from-pink-500 to-purple-600 text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.6)]'
-              }`}
+                  : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.6)] hover:scale-105'
+                }`}
             >
               <span>{isBookingMode ? '✖ ยกเลิกโหมดเลือก' : '🎤 จองห้อง (Book Room)'}</span>
             </button>
@@ -146,7 +188,7 @@ export default function Home() {
           <SkeletonGrid />
         ) : (
           <ScheduleGrid
-            rooms={MOCK_ROOMS}
+            rooms={rooms} // ส่งรายชื่อห้องจริงจาก Supabase
             timeSlots={timeSlots}
             schedules={schedules}
             isBookingMode={isBookingMode}

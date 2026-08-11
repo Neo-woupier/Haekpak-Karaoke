@@ -1,3 +1,5 @@
+// frontend/src/app/ScheduleGrid.tsx
+
 'use client';
 
 import React, { useState } from 'react';
@@ -69,16 +71,12 @@ export default function ScheduleGrid({
             ห้องใหญ่ (Max 12)
           </button>
         </div>
-
-        <div className="hidden sm:block text-xs text-pink-200/80 font-medium">
-          💡 สไลด์แนวนอนเพื่อดูเวลาทั้งหมด
-        </div>
       </div>
 
       {/* Main Interactive Grid Container */}
       <div className="glass-card rounded-2xl p-2 sm:p-4 border border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
         <div className="overflow-x-auto pb-2 scrollbar-thin">
-          <table className="w-full  border-collapse">
+          <table className="w-full min-w-[760px] border-collapse">
             <thead>
               <tr className="border-b border-white/15">
                 {/* Fixed Left Header for Room Name */}
@@ -93,7 +91,7 @@ export default function ScheduleGrid({
                 {timeSlots.map((slot) => (
                   <th
                     key={slot.id}
-                    className="p-2 text-center  border-l border-white/10"
+                    className="p-2 text-center min-w-[100px] border-l border-white/10"
                   >
                     <div className="text-xs font-bold text-pink-300 bg-pink-950/40 px-2 py-1 rounded-lg border border-pink-500/30">
                       {slot.timeLabel}
@@ -117,10 +115,12 @@ export default function ScheduleGrid({
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
-                        {room.badgeText}
+                        {/* ดึง badgeText หรือ badge_text หรือ capacity */}
+                        {room.badgeText || (room as any).badge_text || (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน')}
                       </span>
                       <span className="text-xs font-bold text-pink-400">
-                        ฿{room.pricePerHour}/ชม.
+                        {/* ดึง pricePerHour หรือ price_per_hour */}
+                        ฿{room.pricePerHour || (room as any).price_per_hour || 0}/ชม.
                       </span>
                     </div>
                   </td>
@@ -173,7 +173,7 @@ export default function ScheduleGrid({
                                 roomType: room.type,
                                 slotId: slot.id,
                                 timeLabel: slot.timeLabel,
-                                price: room.pricePerHour,
+                                price: Number(room.pricePerHour || (room as any).price_per_hour || (room as any).price || 160),
                               });
                             }
                           }}

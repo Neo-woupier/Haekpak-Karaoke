@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { SelectedSlot, CustomerInfo, BookingReceipt } from './types';
+import { createClient } from '@/utils/supabase/client';
 
 interface CheckoutModalProps {
   selectedSlots: SelectedSlot[];
@@ -19,7 +20,7 @@ export default function CheckoutModal({
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const totalAmount = selectedSlots.reduce((sum, item) => sum + item.price, 0);
+  const totalAmount = selectedSlots.reduce((sum, item) => sum + (item.price || 0), 0);
   const depositAmount = totalAmount * 0.5; // 50% Deposit
   const remainingAmount = totalAmount - depositAmount;
 
@@ -27,7 +28,7 @@ export default function CheckoutModal({
   // PromptPay ID for Haekpak Karaoke simulation: 0655507523
   const qrCodeUrl = `https://promptpay.io/0655507523/${depositAmount}.png`;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName.trim()) {
       setErrorMessage('กรุณากรอกชื่อผู้จอง');
@@ -41,11 +42,55 @@ export default function CheckoutModal({
     setErrorMessage('');
     setIsSubmitting(true);
 
-    // Simulate backend payment verification response
-    setTimeout(() => {
+    try {
+      const supabase = createClient();
+
+      // 1. บันทึกข้อมูลใบเสร็จลงตาราง bookings
+      const { data: bookingData, error: bookingError } = await supabase
+        .from('bookings')
+        .insert([
+          {
+            customer_name: customerName,
+            customer_phone: phone,
+            total_amount: totalAmount,
+            deposit_amount: depositAmount,
+            remaining_amount: remainingAmount,
+            qr_code_url: qrCodeUrl,
+            payment_status: 'COMPLETED_DEPOSIT',
+          },
+        ])
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error('Booking Error:', bookingError);
+        setErrorMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูลการจอง');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. ล็อคสล็อตเวลาที่ถูกเลือกทั้งหมดลงตาราง booked_slots
+      const slotsToInsert = selectedSlots.map((slot) => ({
+        booking_id: bookingData.id,
+        room_id: slot.roomId,
+        slot_id: slot.slotId,
+      }));
+
+      const { error: slotsError } = await supabase
+        .from('booked_slots')
+        .insert(slotsToInsert);
+
+      if (slotsError) {
+        console.error('Slots Lock Error:', slotsError);
+        setErrorMessage('เกิดข้อผิดพลาดในการล็อคสล็อตเวลา');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. ประกอบข้อมูลใบเสร็จส่งกลับไปยัง onConfirmBooking
       const receipt: BookingReceipt = {
-        bookingId: `HKP-${Math.floor(100000 + Math.random() * 900000)}`,
-        createdAt: new Date().toLocaleString('th-TH'),
+        bookingId: bookingData.id.slice(0, 8).toUpperCase(), // ใช้ ID จริงจาก DB แบบย่อ
+        createdAt: new Date(bookingData.created_at).toLocaleString('th-TH'),
         customer: {
           name: customerName,
           phone: phone,
@@ -57,9 +102,14 @@ export default function CheckoutModal({
         qrCodeUrl,
         paymentStatus: 'COMPLETED_DEPOSIT',
       };
+
       setIsSubmitting(false);
       onConfirmBooking(receipt);
-    }, 800);
+    } catch (err) {
+      console.error('Unexpected Error:', err);
+      setErrorMessage('เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง');
+      setIsSubmitting(false);
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ export interface Room {
   capacity: number; // Max people
   pricePerHour: number; // Baht
   badgeText: string;
+  price_per_slot?: number;
 }
 
 export type SlotStatus = 'available' | 'booked' | 'expired';
