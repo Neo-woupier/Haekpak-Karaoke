@@ -1,3 +1,5 @@
+// frontend/src/app/page.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,6 +14,7 @@ import { GENERATE_TIME_SLOTS } from './mockData'; // เก็บฟังก์
 import { Room } from './types';
 import { SelectedSlot, BookingReceipt } from './types';
 
+
 export default function Home() {
   // App States
   const [showIntro, setShowIntro] = useState(true);
@@ -20,6 +23,7 @@ export default function Home() {
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [completedReceipt, setCompletedReceipt] = useState<BookingReceipt | null>(null);
+  
 
   // 1. เพิ่ม State เก็บรายชื่อห้องจาก Supabase
   const [rooms, setRooms] = useState<Room[]>([]);
