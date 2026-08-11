@@ -145,11 +145,11 @@ export default function CheckoutModal({
 
             <div>
               <label className="block text-xs text-gray-300 mb-1 font-medium">
-                ชื่อ - นามสกุล ผู้จอง <span className="text-pink-400">*</span>
+                ชื่อ ผู้จอง <span className="text-pink-400">*</span>
               </label>
               <input
                 type="text"
-                placeholder="เช่น สมชาย ใจดี"
+                placeholder="เช่น นาย สมชาย ของไม่น้อย"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl glass-input text-sm outline-none transition-all"
@@ -245,10 +245,11 @@ export default function CheckoutModal({
           </div>
 
           {/* Submit Action */}
+          {/* Submit Action */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-micro w-full py-4 rounded-2xl font-black text-base text-white  from-pink-500 via-purple-600 to-cyan-500 shadow-[0_0_30px_rgba(236,72,153,0.7)] hover:shadow-[0_0_40px_rgba(236,72,153,0.9)] cursor-pointer flex items-center justify-center gap-2"
+            className="btn-micro w-full py-4 rounded-2xl font-black text-base text-white bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 shadow-[0_0_30px_rgba(236,72,153,0.7)] hover:shadow-[0_0_40px_rgba(236,72,153,0.9)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 border border-white/20"
           >
             {isSubmitting ? (
               <>
