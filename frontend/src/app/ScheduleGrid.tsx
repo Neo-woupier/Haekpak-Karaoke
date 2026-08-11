@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Room, TimeSlot, SelectedSlot } from './types';
 
 interface ScheduleGridProps {
@@ -25,6 +25,36 @@ export default function ScheduleGrid({
   // Mobile filter state: 'all' | 'small' | 'large'
   const [filterType, setFilterType] = useState<'all' | 'small' | 'large'>('all');
 
+  // Ref และ State สำหรับระบบ Mouse Drag Scroll ตารางซ้าย-ขวา
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 🟢 ฟังก์ชันเช็กสล็อตหมดเวลาตามเวลาไทย (UTC+7 / Asia/Bangkok)
+  const isSlotExpiredByTime = (timeLabel: string) => {
+    const startTimeStr = timeLabel.split(' - ')[0]; // เช่น "13:30"
+    if (!startTimeStr) return false;
+
+    const now = new Date();
+    const bangkokTimeString = now.toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Bangkok',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    }); // ได้เวลาไทยปัจจุบัน เช่น "14:15"
+
+    const [currHours, currMins] = bangkokTimeString.split(':').map(Number);
+    const currentTotalMinutes = currHours * 60 + currMins;
+
+    const [slotHours, slotMins] = startTimeStr.split(':').map(Number);
+    const slotTotalMinutes = slotHours * 60 + slotMins;
+
+    // ถ้าเวลาปัจจุบันมากกว่าหรือเท่ากับเวลาเริ่มสล็อต ถือว่าหมดเวลาจอง
+    return currentTotalMinutes >= slotTotalMinutes;
+  };
+
   const filteredRooms = rooms.filter((r) => {
     if (filterType === 'small') return r.type === 'small';
     if (filterType === 'large') return r.type === 'large';
@@ -33,6 +63,37 @@ export default function ScheduleGrid({
 
   const isSlotSelected = (roomId: string, slotId: string) => {
     return selectedSlots.some((s) => s.roomId === roomId && s.slotId === slotId);
+  };
+
+  // 🟢 เหตุการณ์สำหรับการลากตารางด้วยเมาส์
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!gridRef.current) return;
+    setIsMouseDown(true);
+    setStartX(e.pageX - gridRef.current.offsetLeft);
+    setScrollLeft(gridRef.current.scrollLeft);
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsMouseDown(false);
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+    // หน่วงเวลาเล็กน้อยเพื่อป้องกันไม่ให้ Trigger onClick ขณะลาก
+    setTimeout(() => setIsDragging(false), 50);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || !gridRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - gridRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // ความเร็วในการเลื่อน
+    if (Math.abs(walk) > 5) {
+      setIsDragging(true);
+    }
+    gridRef.current.scrollLeft = scrollLeft - walk;
   };
 
   return (
@@ -48,7 +109,7 @@ export default function ScheduleGrid({
                 : 'text-gray-300 hover:text-white'
             }`}
           >
-            ทั้งหมด (5)
+            ทั้งหมด ({rooms.length})
           </button>
           <button
             onClick={() => setFilterType('small')}
@@ -75,12 +136,22 @@ export default function ScheduleGrid({
 
       {/* Main Interactive Grid Container */}
       <div className="glass-card rounded-2xl p-2 sm:p-4 border border-white/20 shadow-2xl overflow-hidden backdrop-blur-xl">
-        <div className="overflow-x-auto pb-2 scrollbar-thin">
+        {/* 🟢 เพิ่ม Event listeners สำหรับลากเมาส์เลื่อนตาราง */}
+        <div
+          ref={gridRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          className={`overflow-x-auto pb-2 scrollbar-thin select-none ${
+            isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+        >
           <table className="w-full min-w-[760px] border-collapse">
             <thead>
               <tr className="border-b border-white/15">
                 {/* Fixed Left Header for Room Name */}
-                <th className="p-3 text-left w-44 sticky left-0 z-20 bg-gray-950/80 backdrop-blur-md rounded-tl-xl">
+                <th className="p-3 text-left w-44 sticky left-0 z-20 bg-gray-950/90 backdrop-blur-md rounded-tl-xl">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     ห้อง / เวลา
                   </div>
@@ -115,19 +186,29 @@ export default function ScheduleGrid({
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
-                        {/* ดึง badgeText หรือ badge_text หรือ capacity */}
-                        {room.badgeText || (room as any).badge_text || (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน')}
+                        {room.badgeText ||
+                          (room as any).badge_text ||
+                          (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน')}
                       </span>
                       <span className="text-xs font-bold text-pink-400">
-                        {/* ดึง pricePerHour หรือ price_per_hour */}
-                        ฿{room.pricePerHour || (room as any).price_per_hour || 0}/ชม.
+                        ฿
+                        {room.pricePerHour ||
+                          (room as any).price_per_hour ||
+                          0}
+                        /ชม.
                       </span>
                     </div>
                   </td>
 
                   {/* Time Cells */}
                   {timeSlots.map((slot) => {
-                    const status = schedules[room.id]?.[slot.id] || 'available';
+                    const statusInSchedule = schedules[room.id]?.[slot.id];
+                    const expiredByTime = isSlotExpiredByTime(slot.timeLabel);
+
+                    // คำนวณสถานะจริง
+                    const isBooked = statusInSchedule === 'booked';
+                    const isExpired =
+                      statusInSchedule === 'expired' || expiredByTime;
                     const selected = isSlotSelected(room.id, slot.id);
 
                     // Slot Styling Decisions
@@ -135,30 +216,34 @@ export default function ScheduleGrid({
                     let statusLabel = '';
                     let isClickable = false;
 
-                    if (status === 'booked') {
+                    if (isBooked) {
                       slotStyle =
                         'bg-red-950/40 border-red-500/30 text-red-400 cursor-not-allowed opacity-80';
                       statusLabel = 'จองแล้ว';
-                    } else if (status === 'expired') {
+                      isClickable = false;
+                    } else if (isExpired) {
+                      // 🟢 แสดงผลสล็อตหมดเวลา
                       slotStyle =
-                        'bg-gray-900/50 border-gray-700/30 text-gray-500 cursor-not-allowed opacity-60';
+                        'bg-gray-900/60 border-gray-700/30 text-gray-500 cursor-not-allowed opacity-50';
                       statusLabel = 'หมดเวลา';
+                      isClickable = false;
                     } else if (selected) {
                       slotStyle =
-                        'bg-pink-600/90 border-pink-300 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.9)] scale-[1.03] ring-2 ring-pink-300 animate-pulse';
+                        'bg-pink-600/90 border-pink-300 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.9)] scale-[1.03] ring-2 ring-pink-300 animate-pulse cursor-pointer';
                       statusLabel = '✓ เลือกแล้ว';
-                      isClickable = true;
+                      isClickable = true; // ให้คลิกยกเลิกการเลือกได้
                     } else if (isBookingMode) {
+                      // 🟢 เมื่อเปิดโหมดจองเท่านั้น ถึงจะกดเลือกได้
                       slotStyle =
                         'animate-neon-pulse cursor-pointer text-pink-100 font-semibold border-pink-400 hover:scale-105';
                       statusLabel = 'ว่าง (แตะจอง)';
                       isClickable = true;
                     } else {
-                      // Standard Available Slot
+                      // 🟢 เมื่อไม่ได้เปิดโหมดจอง: ปรับเป็นโหมดดูอย่างเดียว (กดไม่ได้)
                       slotStyle =
-                        'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 hover:border-emerald-400 cursor-pointer hover:scale-105';
+                        'bg-emerald-500/10 border-emerald-500/20 text-emerald-400/60 cursor-not-allowed';
                       statusLabel = 'ว่าง';
-                      isClickable = true;
+                      isClickable = false; // บังคับให้กดไม่ได้จนกว่าจะเปิดโหมดจอง
                     }
 
                     return (
@@ -166,20 +251,28 @@ export default function ScheduleGrid({
                         <button
                           disabled={!isClickable}
                           onClick={() => {
-                            if (isClickable) {
+                            // 🟢 กดได้เฉพาะตอนเป็น isClickable และไม่ได้กำลังลากเมาส์
+                            if (isClickable && !isDragging) {
                               onToggleSlot({
                                 roomId: room.id,
                                 roomName: room.name,
                                 roomType: room.type,
                                 slotId: slot.id,
                                 timeLabel: slot.timeLabel,
-                                price: Number(room.pricePerHour || (room as any).price_per_hour || (room as any).price || 160),
+                                price: Number(
+                                  room.pricePerHour ||
+                                    (room as any).price_per_hour ||
+                                    (room as any).price ||
+                                    160
+                                ),
                               });
                             }
                           }}
                           className={`btn-micro w-full h-13 rounded-xl p-1.5 flex flex-col items-center justify-center border text-xs transition-all duration-200 ${slotStyle}`}
                         >
-                          <span className="font-bold text-xs">{slot.timeLabel}</span>
+                          <span className="font-bold text-xs">
+                            {slot.timeLabel}
+                          </span>
                           <span className="text-[10px] mt-0.5 tracking-wide">
                             {statusLabel}
                           </span>
