@@ -25,6 +25,9 @@ export default function ScheduleGrid({
   // Mobile filter state: 'all' | 'small' | 'large'
   const [filterType, setFilterType] = useState<'all' | 'small' | 'large'>('all');
 
+  // Task 1: Left column collapse state (Default: false = Expanded on initial page load)
+  const [isColumnCollapsed, setIsColumnCollapsed] = useState(false);
+
   // Ref และ State สำหรับระบบ Mouse Drag Scroll ตารางซ้าย-ขวา
   const gridRef = useRef<HTMLDivElement>(null);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -132,6 +135,14 @@ export default function ScheduleGrid({
             ห้องใหญ่ (Max 12)
           </button>
         </div>
+
+        {/* Quick indicator button to collapse/expand room column */}
+        <button
+          onClick={() => setIsColumnCollapsed((prev) => !prev)}
+          className="btn-micro flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/40 text-pink-200 shadow-md"
+        >
+          <span>{isColumnCollapsed ? '▶ ขยายคอลัมน์' : '◀ ย่อคอลัมน์'}</span>
+        </button>
       </div>
 
       {/* Main Interactive Grid Container */}
@@ -147,15 +158,53 @@ export default function ScheduleGrid({
             isMouseDown ? 'cursor-grabbing' : 'cursor-grab'
           }`}
         >
-          <table className="w-full min-w-[760px] border-collapse">
+          <table className="w-full min-w-[700px] border-collapse">
             <thead>
               <tr className="border-b border-white/15">
-                {/* Fixed Left Header for Room Name */}
-                <th className="p-3 text-left w-44 sticky left-0 z-20 bg-gray-950/90 backdrop-blur-md rounded-tl-xl">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    ห้อง / เวลา
-                  </div>
-                  <div className="text-sm font-bold text-white"> Haekpak Rooms</div>
+                {/* Fixed Left Header for Room Name (Collapsible Width) */}
+                <th
+                  className={`p-2 sm:p-3 text-left sticky left-0 z-20 bg-gray-950/95 backdrop-blur-md rounded-tl-xl border-r border-white/15 transition-all duration-300 ease-in-out ${
+                    isColumnCollapsed ? 'w-16 min-w-[64px]' : 'w-44 sm:w-48 min-w-[176px]'
+                  }`}
+                >
+                  {isColumnCollapsed ? (
+                    // Collapsed Header View
+                    <div className="flex flex-col items-center justify-center gap-1 text-center py-0.5">
+                      <span className="text-[11px] font-bold text-pink-300 uppercase">
+                        ห้อง
+                      </span>
+                      <button
+                        onClick={() => setIsColumnCollapsed(false)}
+                        className="btn-micro p-1 rounded-lg bg-pink-500/30 hover:bg-pink-500/50 border border-pink-400/50 text-pink-200 hover:text-white transition-all shadow-md"
+                        title="ขยายคอลัมน์ห้อง (Expand)"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    // Expanded Header View (Default)
+                    <div className="flex items-center justify-between gap-1">
+                      <div>
+                        <div className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                          ห้อง / เวลา
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-white truncate">
+                          Haekpak Rooms
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsColumnCollapsed(true)}
+                        className="btn-micro p-1 rounded-lg bg-pink-500/20 hover:bg-pink-500/40 border border-pink-400/40 text-pink-300 hover:text-white transition-all shadow-md shrink-0"
+                        title="ย่อคอลัมน์ห้อง (Collapse)"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </th>
 
                 {/* Time Slot Columns */}
@@ -173,115 +222,144 @@ export default function ScheduleGrid({
             </thead>
 
             <tbody>
-              {filteredRooms.map((room) => (
-                <tr
-                  key={room.id}
-                  className="border-b border-white/10 hover:bg-white/5 transition-colors group"
-                >
-                  {/* Sticky Room Info Cell */}
-                  <td className="p-3 sticky left-0 z-10 bg-gray-950/90 backdrop-blur-md border-r border-white/10 shadow-lg">
-                    <div className="font-bold text-sm text-white flex items-center gap-1.5">
-                      <span>{room.type === 'small' ? '🎤' : '🎉'}</span>
-                      <span className="truncate">{room.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
-                        {room.badgeText ||
-                          (room as any).badge_text ||
-                          (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน')}
-                      </span>
-                      <span className="text-xs font-bold text-pink-400">
-                        ฿
-                        {room.pricePerHour ||
-                          (room as any).price_per_hour ||
-                          0}
-                        /ชม.
-                      </span>
-                    </div>
-                  </td>
+              {filteredRooms.map((room, roomIdx) => {
+                const badgeText =
+                  room.badgeText ||
+                  (room as any).badge_text ||
+                  (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน');
 
-                  {/* Time Cells */}
-                  {timeSlots.map((slot) => {
-                    const statusInSchedule = schedules[room.id]?.[slot.id];
-                    const expiredByTime = isSlotExpiredByTime(slot.timeLabel);
+                const priceValue =
+                  room.pricePerHour ||
+                  (room as any).price_per_hour ||
+                  (room as any).price ||
+                  160;
 
-                    // คำนวณสถานะจริง
-                    const isBooked = statusInSchedule === 'booked';
-                    const isExpired =
-                      statusInSchedule === 'expired' || expiredByTime;
-                    const selected = isSlotSelected(room.id, slot.id);
-
-                    // Slot Styling Decisions
-                    let slotStyle = '';
-                    let statusLabel = '';
-                    let isClickable = false;
-
-                    if (isBooked) {
-                      slotStyle =
-                        'bg-red-950/40 border-red-500/30 text-red-400 cursor-not-allowed opacity-80';
-                      statusLabel = 'จองแล้ว';
-                      isClickable = false;
-                    } else if (isExpired) {
-                      // 🟢 แสดงผลสล็อตหมดเวลา
-                      slotStyle =
-                        'bg-gray-900/60 border-gray-700/30 text-gray-500 cursor-not-allowed opacity-50';
-                      statusLabel = 'หมดเวลา';
-                      isClickable = false;
-                    } else if (selected) {
-                      slotStyle =
-                        'bg-pink-600/90 border-pink-300 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.9)] scale-[1.03] ring-2 ring-pink-300 animate-pulse cursor-pointer';
-                      statusLabel = '✓ เลือกแล้ว';
-                      isClickable = true; // ให้คลิกยกเลิกการเลือกได้
-                    } else if (isBookingMode) {
-                      // 🟢 เมื่อเปิดโหมดจองเท่านั้น ถึงจะกดเลือกได้
-                      slotStyle =
-                        'animate-neon-pulse cursor-pointer text-pink-100 font-semibold border-pink-400 hover:scale-105';
-                      statusLabel = 'ว่าง (แตะจอง)';
-                      isClickable = true;
-                    } else {
-                      // 🟢 เมื่อไม่ได้เปิดโหมดจอง: ปรับเป็นโหมดดูอย่างเดียว (กดไม่ได้)
-                      slotStyle =
-                        'bg-emerald-500/10 border-emerald-500/20 text-emerald-400/60 cursor-not-allowed';
-                      statusLabel = 'ว่าง';
-                      isClickable = false; // บังคับให้กดไม่ได้จนกว่าจะเปิดโหมดจอง
-                    }
-
-                    return (
-                      <td key={slot.id} className="p-1.5 text-center">
-                        <button
-                          disabled={!isClickable}
-                          onClick={() => {
-                            // 🟢 กดได้เฉพาะตอนเป็น isClickable และไม่ได้กำลังลากเมาส์
-                            if (isClickable && !isDragging) {
-                              onToggleSlot({
-                                roomId: room.id,
-                                roomName: room.name,
-                                roomType: room.type,
-                                slotId: slot.id,
-                                timeLabel: slot.timeLabel,
-                                price: Number(
-                                  room.pricePerHour ||
-                                    (room as any).price_per_hour ||
-                                    (room as any).price ||
-                                    160
-                                ),
-                              });
-                            }
-                          }}
-                          className={`btn-micro w-full h-13 rounded-xl p-1.5 flex flex-col items-center justify-center border text-xs transition-all duration-200 ${slotStyle}`}
-                        >
-                          <span className="font-bold text-xs">
-                            {slot.timeLabel}
+                return (
+                  <tr
+                    key={room.id}
+                    className="border-b border-white/10 hover:bg-white/5 transition-colors group"
+                  >
+                    {/* Sticky Room Info Cell */}
+                    <td
+                      className={`p-2 sm:p-3 sticky left-0 z-10 bg-gray-950/95 backdrop-blur-md border-r border-white/15 shadow-lg transition-all duration-300 ease-in-out ${
+                        isColumnCollapsed ? 'w-16 min-w-[64px]' : 'w-44 sm:w-48 min-w-[176px]'
+                      }`}
+                    >
+                      {isColumnCollapsed ? (
+                        // Collapsed Cell View (Icon + Short Room Number + Price)
+                        <div className="flex flex-col items-center justify-center text-center py-1 space-y-1">
+                          <span className="text-base">{room.type === 'small' ? '🎤' : '🎉'}</span>
+                          <span className="text-[11px] font-extrabold text-white leading-tight">
+                            R{roomIdx + 1}
                           </span>
-                          <span className="text-[10px] mt-0.5 tracking-wide">
-                            {statusLabel}
+                          <span className="text-[10px] font-bold text-pink-400">
+                            ฿{priceValue}
                           </span>
-                        </button>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+                        </div>
+                      ) : (
+                        // Expanded Cell View (Full Room Title & Centered Capacity Badge)
+                        <div>
+                          <div className="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+                            <span>{room.type === 'small' ? '🎤' : '🎉'}</span>
+                            <span className="truncate">{room.name}</span>
+                          </div>
+
+                          {/* Task 2: Center-aligned capacity badge & price container */}
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 mt-2">
+                            {/* Centered Capacity Badge */}
+                            <div className="flex-1 flex items-center justify-center text-center px-2 py-1 rounded-full bg-white/10 text-gray-200 border border-white/15 shadow-inner">
+                              <span className="text-[11px] font-semibold leading-none text-center w-full">
+                                {badgeText}
+                              </span>
+                            </div>
+
+                            {/* Price Badge */}
+                            <span className="text-xs font-bold text-pink-400 text-center sm:text-right shrink-0">
+                              ฿{priceValue}/ชม.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Time Cells */}
+                    {timeSlots.map((slot) => {
+                      const statusInSchedule = schedules[room.id]?.[slot.id];
+                      const expiredByTime = isSlotExpiredByTime(slot.timeLabel);
+
+                      // คำนวณสถานะจริง
+                      const isBooked = statusInSchedule === 'booked';
+                      const isExpired =
+                        statusInSchedule === 'expired' || expiredByTime;
+                      const selected = isSlotSelected(room.id, slot.id);
+
+                      // Slot Styling Decisions
+                      let slotStyle = '';
+                      let statusLabel = '';
+                      let isClickable = false;
+
+                      if (isBooked) {
+                        slotStyle =
+                          'bg-red-950/40 border-red-500/30 text-red-400 cursor-not-allowed opacity-80';
+                        statusLabel = 'จองแล้ว';
+                        isClickable = false;
+                      } else if (isExpired) {
+                        // 🟢 แสดงผลสล็อตหมดเวลา
+                        slotStyle =
+                          'bg-gray-900/60 border-gray-700/30 text-gray-500 cursor-not-allowed opacity-50';
+                        statusLabel = 'หมดเวลา';
+                        isClickable = false;
+                      } else if (selected) {
+                        slotStyle =
+                          'bg-pink-600/90 border-pink-300 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.9)] scale-[1.03] ring-2 ring-pink-300 animate-pulse cursor-pointer';
+                        statusLabel = '✓ เลือกแล้ว';
+                        isClickable = true; // ให้คลิกยกเลิกการเลือกได้
+                      } else if (isBookingMode) {
+                        // 🟢 เมื่อเปิดโหมดจองเท่านั้น ถึงจะกดเลือกได้
+                        slotStyle =
+                          'animate-neon-pulse cursor-pointer text-pink-100 font-semibold border-pink-400 hover:scale-105';
+                        statusLabel = 'ว่าง (แตะจอง)';
+                        isClickable = true;
+                      } else {
+                        // 🟢 เมื่อไม่ได้เปิดโหมดจอง: ปรับเป็นโหมดดูอย่างเดียว (กดไม่ได้)
+                        slotStyle =
+                          'bg-emerald-500/10 border-emerald-500/20 text-emerald-400/60 cursor-not-allowed';
+                        statusLabel = 'ว่าง';
+                        isClickable = false; // บังคับให้กดไม่ได้จนกว่าจะเปิดโหมดจอง
+                      }
+
+                      return (
+                        <td key={slot.id} className="p-1.5 text-center">
+                          <button
+                            disabled={!isClickable}
+                            onClick={() => {
+                              // 🟢 กดได้เฉพาะตอนเป็น isClickable และไม่ได้กำลังลากเมาส์
+                              if (isClickable && !isDragging) {
+                                onToggleSlot({
+                                  roomId: room.id,
+                                  roomName: room.name,
+                                  roomType: room.type,
+                                  slotId: slot.id,
+                                  timeLabel: slot.timeLabel,
+                                  price: Number(priceValue),
+                                });
+                              }
+                            }}
+                            className={`btn-micro w-full h-13 rounded-xl p-1.5 flex flex-col items-center justify-center border text-xs transition-all duration-200 ${slotStyle}`}
+                          >
+                            <span className="font-bold text-xs">
+                              {slot.timeLabel}
+                            </span>
+                            <span className="text-[10px] mt-0.5 tracking-wide">
+                              {statusLabel}
+                            </span>
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
