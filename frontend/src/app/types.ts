@@ -1,3 +1,5 @@
+// frontend/src/app/types.ts
+
 export type RoomType = 'small' | 'large';
 
 export interface Room {
@@ -27,6 +29,7 @@ export interface SelectedSlot {
   timeLabel: string;
   price: number;
 }
+
 
 export interface CustomerInfo {
   name: string;

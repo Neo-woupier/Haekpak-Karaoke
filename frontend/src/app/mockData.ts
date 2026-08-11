@@ -1,3 +1,5 @@
+// frontend/src/app/mockData.ts
+
 import { Room, TimeSlot } from './types';
 
 export const MOCK_ROOMS: Room[] = [
