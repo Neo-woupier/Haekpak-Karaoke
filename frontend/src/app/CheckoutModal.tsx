@@ -240,7 +240,7 @@ export default function CheckoutModal({
             </div>
 
             <p className="text-[11px] text-gray-300">
-              ****เป็นระบบจำลองเพื่อการศึษาเท่านั้น*** qr เพื่อต้องการ donate ค่ากาแฟ ผู้จัดทำ
+              ****เป็นระบบจำลองเพื่อการศึกษาเท่านั้น*** qr เพื่อต้องการ donate ค่ากาแฟ ผู้จัดทำ
             </p>
           </div>
 
