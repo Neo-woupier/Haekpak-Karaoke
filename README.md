@@ -13,10 +13,10 @@
 ## ✨ Features (ฟีเจอร์หลัก)
 
 * **Interactive Schedule Grid:** ตารางแสดงสถานะห้องพักแบบเรียลไทม์ (Available, Booked, Expired)
-* **Dynamic Time Slots:** แสดงช่วงเวลาจองเป็นบล็อก 1 ชั่วโมง (ช่วงเวลาละ 30 นาที) เริ่มตั้งแต่ 13:30 น. เป็นต้นไป
-* **Room Capacity Management:** 
-  * 🚪 **Small Rooms (Rooms 1 - 3):** ความจุสูงสุด 7 คน
-  * 🚪 **Large Rooms (Rooms 4 - 5):** ความจุสูงสุด 12 คน
+* **Dynamic Time Slots:** แสดงช่วงเวลาจองเป็นบล็อก 1 ชั่วโมงแบบคงที่ (Fixed 1-Hour Slots) ตั้งแต่เวลา 13:00 - 00:00 น. (เที่ยงคืน)
+* **Room Capacity & Pricing:** 
+  * 🚪 **Small Rooms (Rooms 1 - 3):** ความจุสูงสุด 7 คน (160 บาท/ชั่วโมง)
+  * 🚪 **Large Rooms (Rooms 4 - 5):** ความจุสูงสุด 12 คน (180 บาท/ชั่วโมง)
 * **Responsive UI:** รองรับการใช้งานทั้งบนคอมพิวเตอร์และสมาร์ตโฟน
 
 ---

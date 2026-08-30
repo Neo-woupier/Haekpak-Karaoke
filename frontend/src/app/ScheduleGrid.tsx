@@ -37,7 +37,7 @@ export default function ScheduleGrid({
 
   // 🟢 ฟังก์ชันเช็กสล็อตหมดเวลาตามเวลาไทย (UTC+7 / Asia/Bangkok)
   const isSlotExpiredByTime = (timeLabel: string) => {
-    const startTimeStr = timeLabel.split(' - ')[0]; // เช่น "13:30"
+    const startTimeStr = timeLabel.split(' - ')[0]; // เช่น "13:00"
     if (!startTimeStr) return false;
 
     const now = new Date();
@@ -232,7 +232,7 @@ export default function ScheduleGrid({
                   room.pricePerHour ||
                   (room as any).price_per_hour ||
                   (room as any).price ||
-                  160;
+                  (room.type === 'large' ? 180 : 160);
 
                 return (
                   <tr

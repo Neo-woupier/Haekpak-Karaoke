@@ -16,9 +16,9 @@ export type SlotStatus = 'available' | 'booked' | 'expired';
 
 export interface TimeSlot {
   id: string;
-  startTime: string; // e.g. "13:30"
-  endTime: string;   // e.g. "14:30"
-  timeLabel: string; // e.g. "13:30 - 14:30"
+  startTime: string; // e.g. "13:00"
+  endTime: string;   // e.g. "14:00"
+  timeLabel: string; // e.g. "13:00 - 14:00"
   status: SlotStatus;
 }
 

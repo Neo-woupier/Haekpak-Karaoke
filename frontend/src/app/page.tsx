@@ -10,7 +10,7 @@ import BottomDrawerSummary from './BottomDrawerSummary';
 import CheckoutModal from './CheckoutModal';
 import SuccessPassModal from './SuccessPassModal';
 import { createClient } from '@/utils/supabase/client';
-import { GENERATE_TIME_SLOTS } from './mockData';
+import { GENERATE_TIME_SLOTS, MOCK_ROOMS, INITIAL_ROOM_SCHEDULES } from './mockData';
 import { Room, SelectedSlot, BookingReceipt } from './types';
 
 export default function Home() {
@@ -62,28 +62,38 @@ export default function Home() {
         Record<string, 'available' | 'booked' | 'expired'>
       > = {};
 
-      if (slotsData) {
+      if (slotsData && slotsData.length > 0) {
         slotsData.forEach((item) => {
           if (!formattedSchedules[item.room_id]) {
             formattedSchedules[item.room_id] = {};
           }
           formattedSchedules[item.room_id][item.slot_id] = 'booked';
         });
+        setSchedules(formattedSchedules);
+      } else {
+        setSchedules(INITIAL_ROOM_SCHEDULES);
       }
 
-      if (roomsData) {
+      if (roomsData && roomsData.length > 0) {
         const formattedRooms: Room[] = roomsData.map((room) => ({
           ...room,
-          pricePerHour: Number(room.price_per_hour || 0),
+          pricePerHour: Number(
+            room.price_per_hour || (room.type === 'large' ? 180 : 160)
+          ),
           badgeText:
             room.badge_text ||
-            (room.capacity ? `สูงสุด ${room.capacity} คน` : '4-6 คน'),
+            (room.capacity
+              ? `สูงสุด ${room.capacity} คน`
+              : room.type === 'large'
+              ? 'สูงสุด 12 คน'
+              : 'สูงสุด 7 คน'),
         }));
 
         setRooms(formattedRooms);
+      } else {
+        setRooms(MOCK_ROOMS);
       }
 
-      setSchedules(formattedSchedules);
       setIsLoading(false);
     };
 
@@ -154,7 +164,7 @@ export default function Home() {
               HAEKPAK KARAOKE
             </h1>
             <p className="text-xs text-gray-300">
-              จองห้องคาราโอเกะง่ายๆ ผ่านมือถือ | เปิดบริการ 13:30 - 23:30 น.
+              จองห้องคาราโอเกะง่ายๆ ผ่านมือถือ | เปิดบริการ 13:00 - 00:00 น.
             </p>
           </div>
 

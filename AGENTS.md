@@ -27,11 +27,11 @@ A web-based room booking application for **"Haekpak Karaoke"**. This is a simula
   - **Fade Out & Transition:** Smoothly fades out to transition into the selection / schedule view.
 - **Time Slots (Header/Columns):**
   - 1-hour duration per block.
-  - 30-minute incremental intervals.
-  - Operating hours start from **13:30 onwards**.
+  - Fixed 1-hour intervals (13:00 - 14:00, 14:00 - 15:00, ..., 23:00 - 00:00).
+  - Operating hours from **13:00 - 00:00 (Midnight)**.
 - **Room Types (Rows):**
-  - **Rooms 1 - 3:** Small Rooms (Capacity: Max 7 people)
-  - **Rooms 4 - 5:** Large Rooms (Capacity: Max 12 people)
+  - **Rooms 1 - 3:** Small Rooms (Capacity: Max 7 people, 160 THB/hr)
+  - **Rooms 4 - 5:** Large Rooms (Capacity: Max 12 people, 180 THB/hr)
 - **Time Slot Visual States:**
   - **Booked Slot:** Dark/Occupied color indicating it is taken.
   - **Past/Expired Slot:** Distinct greyed/darkened color indicating the time has passed and is unbookable.
