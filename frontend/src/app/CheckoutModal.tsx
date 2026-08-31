@@ -62,7 +62,7 @@ export default function CheckoutModal({
 
   // PromptPay QR mock generator link with real-time deposit value
   // PromptPay ID for Haekpak Karaoke simulation: 0655507523
-  const qrCodeUrl = `https://promptpay.io/0655507523/${depositAmount}.png`;
+  const qrCodeUrl = `https://promptpay.io/0948241944/${depositAmount}.png`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -291,7 +291,7 @@ export default function CheckoutModal({
             </div>
 
             <p className="text-[11px] text-gray-300">
-              ****เป็นระบบจำลองเพื่อการศึกษาเท่านั้น*** qr เพื่อต้องการ donate ค่ากาแฟ ผู้จัดทำ
+              ****เป็นระบบจำลองเพื่อการศึกษาเท่านั้น***
             </p>
           </div>
 
