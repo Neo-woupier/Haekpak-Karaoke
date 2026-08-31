@@ -3,6 +3,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import IntroSequence from './IntroSequence';
 import SkeletonGrid from './SkeletonGrid';
 import ScheduleGrid from './ScheduleGrid';
@@ -211,6 +212,17 @@ export default function Home() {
             onToggleSlot={handleToggleSlot}
           />
         )}
+
+        {/* Footer Admin Link */}
+        <footer className="pt-6 pb-2 text-center">
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-gray-400 hover:text-pink-300 glass-card-light hover:border-pink-500/40 transition-all duration-200"
+          >
+            <span>🔒</span>
+            <span>สำหรับผู้ดูแลระบบ (Admin)</span>
+          </Link>
+        </footer>
       </div>
 
       {/* Bottom Drawer Summary Component */}
