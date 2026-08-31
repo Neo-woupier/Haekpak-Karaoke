@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { SelectedSlot, CustomerInfo, BookingReceipt } from './types';
-import { createClient } from '@/utils/supabase/client';
+import { createClient, uploadPaymentSlip } from '@/utils/supabase/client';
 
 interface CheckoutModalProps {
   selectedSlots: SelectedSlot[];
@@ -19,6 +19,42 @@ export default function CheckoutModal({
   const [phone, setPhone] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Payment Slip Upload State
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipPreviewUrl, setSlipPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setErrorMessage('ไฟล์ต้องเป็น JPEG, PNG หรือ WEBP เท่านั้น');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      setErrorMessage('ขนาดไฟล์ต้องไม่เกิน 5 MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setSlipFile(file);
+    setSlipPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemoveSlip = () => {
+    setSlipFile(null);
+    if (slipPreviewUrl) URL.revokeObjectURL(slipPreviewUrl);
+    setSlipPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const totalAmount = selectedSlots.reduce((sum, item) => sum + (item.price || 0), 0);
   const depositAmount = totalAmount * 0.5; // 50% Deposit
@@ -38,14 +74,29 @@ export default function CheckoutModal({
       setErrorMessage('กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง (อย่างน้อย 9-10 หลัก)');
       return;
     }
+    if (!slipFile) {
+      setErrorMessage('กรุณาแนบสลิปการโอนเงินมัดจำก่อนยืนยัน');
+      return;
+    }
 
     setErrorMessage('');
     setIsSubmitting(true);
 
+    // อัปโหลดสลิปก่อนบันทึกข้อมูลการจอง
+    setIsUploading(true);
+    const paymentSlipUrl = await uploadPaymentSlip(slipFile);
+    setIsUploading(false);
+
+    if (!paymentSlipUrl) {
+      setErrorMessage('อัปโหลดสลิปไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const supabase = createClient();
 
-      // 1. บันทึกข้อมูลใบเสร็จลงตาราง bookings
+      // 1. บันทึกข้อมูลใบเสร็จลงตาราง bookings (พร้อม URL สลิป)
       const { data: bookingData, error: bookingError } = await supabase
         .from('bookings')
         .insert([
@@ -55,7 +106,7 @@ export default function CheckoutModal({
             total_amount: totalAmount,
             deposit_amount: depositAmount,
             remaining_amount: remainingAmount,
-            qr_code_url: qrCodeUrl,
+            payment_slip_url: paymentSlipUrl,
             payment_status: 'COMPLETED_DEPOSIT',
           },
         ])
@@ -244,19 +295,98 @@ export default function CheckoutModal({
             </p>
           </div>
 
+          {/* Payment Slip Upload Section */}
+          <div className="glass-card rounded-2xl p-4 space-y-3 border border-cyan-500/30">
+            <div className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+              🧾 แนบสลิปโอนเงินมัดจำ <span className="text-pink-400">*</span>
+            </div>
+
+            {!slipPreviewUrl ? (
+              // Drop Zone / File Picker
+              <label
+                htmlFor="slip-upload"
+                className="flex flex-col items-center justify-center gap-2 w-full h-32 rounded-xl border-2 border-dashed border-cyan-500/40 bg-cyan-950/20 hover:bg-cyan-950/40 hover:border-cyan-400/60 transition-all cursor-pointer group"
+              >
+                <span className="text-3xl group-hover:scale-110 transition-transform">📷</span>
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-cyan-300">
+                    แตะหรือคลิกเพื่อเลือกรูปสลิป
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    รองรับ JPEG, PNG, WEBP • สูงสุด 5 MB
+                  </p>
+                </div>
+                <input
+                  id="slip-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (!ALLOWED_TYPES.includes(file.type)) {
+                        setErrorMessage('ไฟล์ต้องเป็น JPEG, PNG หรือ WEBP เท่านั้น');
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                        return;
+                      }
+                      if (file.size > MAX_SIZE_BYTES) {
+                        setErrorMessage('ขนาดไฟล์ต้องไม่เกิน 5 MB');
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                        return;
+                      }
+                      setErrorMessage('');
+                      setSlipFile(file);
+                      setSlipPreviewUrl(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </label>
+            ) : (
+              // Image Preview
+              <div className="relative w-full">
+                <img
+                  src={slipPreviewUrl}
+                  alt="Payment Slip Preview"
+                  className="w-full max-h-48 object-contain rounded-xl border border-cyan-500/30 bg-black/30"
+                />
+                <button
+                  type="button"
+                  onClick={handleRemoveSlip}
+                  className="btn-micro absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-red-500/80 hover:bg-red-500 text-white text-[11px] font-bold border border-red-400/50 shadow-md transition-all"
+                >
+                  ✕ เปลี่ยนรูป
+                </button>
+                <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-emerald-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-semibold">แนบสลิปเรียบร้อยแล้ว: {slipFile?.name}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Submit Action */}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !slipFile}
             className="btn-micro w-full py-4 rounded-2xl font-black text-base text-white bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 shadow-[0_0_30px_rgba(236,72,153,0.7)] hover:shadow-[0_0_40px_rgba(236,72,153,0.9)] hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 border border-white/20"
           >
-            {isSubmitting ? (
+            {isUploading ? (
+              <>
+                <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                <span>กำลังอัปโหลดสลิป...</span>
+              </>
+            ) : isSubmitting ? (
               <>
                 <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                 <span>กำลังบันทึกการชำระเงิน...</span>
               </>
             ) : (
-              <span>ชำระเงินมัดจำ ฿{depositAmount.toLocaleString()} & ยืนยันการจอง</span>
+              <span>
+                {slipFile
+                  ? `ยืนยันการจอง & ชำระมัดจำ ฿${depositAmount.toLocaleString()}`
+                  : '⚠️ กรุณาแนบสลิปก่อนยืนยัน'}
+              </span>
             )}
           </button>
         </form>
